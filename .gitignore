@@ -1,5 +1,5 @@
 package.json
 package-lock.json
-mode_modules
+node_modules
 assets
 index.html
