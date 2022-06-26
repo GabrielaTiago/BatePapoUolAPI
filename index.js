@@ -1,4 +1,4 @@
-import express, { json } from "express";
+import express, { json, response } from "express";
 import dotenv from "dotenv";
 import { MongoClient } from "mongodb";
 import cors from "cors";
@@ -45,7 +45,7 @@ server.post("/participants", async (require, response) => {
 
         await db
             .collection("messages")
-            .insertOne({ 
+            .insertOne({
                 from: user.name,
                 to: 'Todos',
                 text: 'entra na sala...',
@@ -59,6 +59,11 @@ server.post("/participants", async (require, response) => {
         console.error(error);
         response.status(422).send(error);
     }
+});
+
+server.get("/participants", async (require, response) => {
+    const allParticipants = await db.collection("participants").find().toArray();
+    response.send(allParticipants);
 });
 
 server.listen(5000);
