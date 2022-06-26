@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import { MongoClient } from "mongodb";
 import cors from "cors";
 import joi from "joi";
+import dayjs from "dayjs"
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ server.post("/participants", async (require, response) => {
     const user = require.body;
     const validation = userSchema.validate(user, { abortEarly: true });
     const checkUsers = await db.collection("participants").findOne({ name: user.name });
+    const time = dayjs().format("HH:mm:ss");
 
     if (validation.error) {
         response.status(422).send("Campo Obrigatório");
@@ -40,6 +42,16 @@ server.post("/participants", async (require, response) => {
         await db
             .collection("participants")
             .insertOne({ name: user.name, lastStatus: Date.now() });
+
+        await db
+            .collection("messages")
+            .insertOne({ 
+                from: user.name,
+                to: 'Todos',
+                text: 'entra na sala...',
+                type: 'status',
+                time: time
+            });
 
         response.status(201).send("ok");
 
