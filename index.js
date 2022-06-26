@@ -66,4 +66,9 @@ server.get("/participants", async (require, response) => {
     response.send(allParticipants);
 });
 
+server.get("/messages", async (require, response) => {
+    const allMessages = await db.collection("messages").find().toArray();
+    response.send(allMessages);
+});
+
 server.listen(5000);
