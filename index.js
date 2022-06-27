@@ -24,7 +24,7 @@ const userSchema = joi.object({
 });
 
 const messageSchema = joi.object({
-    from: joi.string().required(),
+    from: joi.string(),
     to: joi.string().required(),
     text: joi.string().required(),
     type: joi.string().required().valid('private_message', 'message')
@@ -70,7 +70,7 @@ server.post("/participants", async (require, response) => {
 
 server.get("/participants", async (require, response) => {
     const allParticipants = await db.collection("participants").find().toArray();
-    response.send(allParticipants);
+    response.status(201).send(allParticipants);
 });
 
 server.post("/messages", async (require, response) => {
@@ -79,7 +79,6 @@ server.post("/messages", async (require, response) => {
     const validation = messageSchema.validate(message, { abortEarly: true });
     const checkMessage = await db.collection("participants").findOne({ name: messageFrom });
     const time = dayjs().format("HH:mm:ss");
-
 
     if (validation.error) {
         response.status(422).send("Campos Obrigatórios");
@@ -93,11 +92,11 @@ server.post("/messages", async (require, response) => {
     try {
         await db
             .collection("messages")
-            .insertOne({ 
-                from: messageFrom, 
+            .insertOne({
+                from: messageFrom,
                 ...message,
-                time: time });
-
+                time: time
+            });
 
         response.status(201).send("ok");
 
@@ -108,8 +107,27 @@ server.post("/messages", async (require, response) => {
 });
 
 server.get("/messages", async (require, response) => {
-    const allMessages = await db.collection("messages").find().toArray();
-    response.send(allMessages);
+    const limit = parseInt(require.query.limit);
+
+    const allMessages = await db
+        .collection("messages")
+        .find({
+            $or:
+                [
+                    { to: require.headers.user },
+                    { from: require.headers.user },
+                    { to: "Todos" }
+                ]
+        })
+        .toArray();
+
+    if (limit) {
+        const lastMessages = allMessages.slice(-limit);
+        response.status(200).send(lastMessages);
+    }
+    else {
+        response.status(200).send(allMessages);
+    }
 });
 
 server.listen(5000);
