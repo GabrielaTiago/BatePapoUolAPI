@@ -63,7 +63,6 @@ server.post("/participants", async (require, response) => {
         response.status(201).send("ok");
 
     } catch (error) {
-        console.error(error);
         response.status(422).send(error);
     }
 });
@@ -101,7 +100,6 @@ server.post("/messages", async (require, response) => {
         response.status(201).send("ok");
 
     } catch (error) {
-        console.error(error);
         response.status(422).send(error);
     }
 });
@@ -130,4 +128,26 @@ server.get("/messages", async (require, response) => {
     }
 });
 
+server.post("/status", async (require, response) => {
+    const user = require.headers.user;
+    const participants = await db.collection("participants").findOne({ name: user });
+
+    if (!participants) {
+        response.status(404).send("Participante não encontrado");
+        return;
+    }
+
+    try {
+        await db
+            .collection("participants")
+            .updateOne(
+                { "name": user },
+                { $set: { "lastStatus": Date.now() } });
+
+        response.sendStatus(200);
+
+    } catch (error) {
+        response.status(500).send(error);
+    }
+});
 server.listen(5000);
