@@ -150,4 +150,29 @@ server.post("/status", async (require, response) => {
         response.status(500).send(error);
     }
 });
+
+const inactivesUsers = async () => {
+    let deletedUsers = [];
+    const currentTime = Date.now() - 100000;
+
+    const timeSpent = await db.collection('participants').find({lastStatus: {$lt : currentTime}}).toArray();
+    await db.collection('participants').deleteMany({lastStatus: {$lt : currentTime}});
+
+    for(let i = 0; i < timeSpent.length; i++){
+        deletedUsers.push({
+            from: timeSpent[i].name,
+            to: 'Todos',
+            text: 'sai da sala...',
+            type: 'status',
+            time: dayjs().format('HH:mm:ss')
+        });
+    }
+
+    if(deletedUsers.length > 0){
+        await db.collection('messages').insertMany(deletedUsers);
+    }
+}
+
+setInterval(inactivesUsers, 15000);
+
 server.listen(5000);
