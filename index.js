@@ -23,6 +23,13 @@ const userSchema = joi.object({
     name: joi.string().required()
 });
 
+const messageSchema = joi.object({
+    from: joi.string().required(),
+    to: joi.string().required(),
+    text: joi.string().required(),
+    type: joi.string().required().valid('private_message', 'message')
+});
+
 server.post("/participants", async (require, response) => {
     const user = require.body;
     const validation = userSchema.validate(user, { abortEarly: true });
@@ -64,6 +71,40 @@ server.post("/participants", async (require, response) => {
 server.get("/participants", async (require, response) => {
     const allParticipants = await db.collection("participants").find().toArray();
     response.send(allParticipants);
+});
+
+server.post("/messages", async (require, response) => {
+    const message = require.body;
+    const messageFrom = require.headers.user;
+    const validation = messageSchema.validate(message, { abortEarly: true });
+    const checkMessage = await db.collection("participants").findOne({ name: messageFrom });
+    const time = dayjs().format("HH:mm:ss");
+
+
+    if (validation.error) {
+        response.status(422).send("Campos Obrigatórios");
+        return;
+    }
+    if (!checkMessage) {
+        response.status(422).send("Usuário não encontrado");
+        return;
+    }
+
+    try {
+        await db
+            .collection("messages")
+            .insertOne({ 
+                from: messageFrom, 
+                ...message,
+                time: time });
+
+
+        response.status(201).send("ok");
+
+    } catch (error) {
+        console.error(error);
+        response.status(422).send(error);
+    }
 });
 
 server.get("/messages", async (require, response) => {
