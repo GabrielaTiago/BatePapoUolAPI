@@ -1,10 +1,6 @@
 import joi from "joi";
 
 const messageSchema = joi.object({
-  from: joi.string().trim().required().messages({
-    'string.empty': `The 'from' value is not allowed to be empty`,
-    'any.required': `'from' is a required field`,
-  }),
   to: joi.string().required().messages({
     'string.empty': `The 'to' value is not allowed to be empty`,
     'any.required': `'to' is a required field`,
