@@ -5,6 +5,7 @@ import cors from "cors";
 import dayjs from "dayjs";
 import { database } from "./database/mongodb.js";
 import { schemas } from "./schemas/schemas.js";
+import { validatesSchemas } from "./middlewares/validateSchemas.js";
 
 dotenv.config();
 
@@ -13,41 +14,40 @@ const server = express();
 server.use(json());
 server.use(cors());
 
-server.post("/participants", async (require, response) => {
-  const user = require.body;
-  const validation = schemas.participant.validate(user, { abortEarly: false });
-  const checkUsers = await database
-    .collection("participants")
-    .findOne({ name: user.name });
-  const time = dayjs().format("HH:mm:ss");
-
-  if (validation.error) {
-    response.status(422).send("Campo Obrigatório");
-    return;
-  }
-  if (checkUsers) {
-    response.status(409).send("Usuário já existe");
-    return;
-  }
-
-  try {
-    await database
+server.post(
+  "/participants",
+  validatesSchemas("participant"),
+  async (require, response) => {
+    const user = require.body;
+    const checkUsers = await database
       .collection("participants")
-      .insertOne({ name: user.name, lastStatus: Date.now() });
+      .findOne({ name: user.name });
+    const time = dayjs().format("HH:mm:ss");
 
-    await database.collection("messages").insertOne({
-      from: user.name,
-      to: "Todos",
-      text: "entra na sala...",
-      type: "status",
-      time: time,
-    });
+    if (checkUsers) {
+      response.status(409).send("Usuário já existe");
+      return;
+    }
 
-    response.status(201).send("ok");
-  } catch (error) {
-    response.status(422).send(error);
+    try {
+      await database
+        .collection("participants")
+        .insertOne({ name: user.name, lastStatus: Date.now() });
+
+      await database.collection("messages").insertOne({
+        from: user.name,
+        to: "Todos",
+        text: "entra na sala...",
+        type: "status",
+        time: time,
+      });
+
+      response.status(201).send("ok");
+    } catch (error) {
+      response.status(422).send(error);
+    }
   }
-});
+);
 
 server.get("/participants", async (require, response) => {
   const allParticipants = await database
@@ -57,36 +57,35 @@ server.get("/participants", async (require, response) => {
   response.status(201).send(allParticipants);
 });
 
-server.post("/messages", async (require, response) => {
-  const message = require.body;
-  const messageFrom = require.headers.user;
-  const validation = schemas.message.validate(message, { abortEarly: false });
-  const checkMessage = await database
-    .collection("participants")
-    .findOne({ name: messageFrom });
-  const time = dayjs().format("HH:mm:ss");
+server.post(
+  "/messages",
+  validatesSchemas("message"),
+  async (require, response) => {
+    const message = require.body;
+    const messageFrom = require.headers.user;
+    const checkMessage = await database
+      .collection("participants")
+      .findOne({ name: messageFrom });
+    const time = dayjs().format("HH:mm:ss");
 
-  if (validation.error) {
-    response.status(422).send("Campos Obrigatórios");
-    return;
-  }
-  if (!checkMessage) {
-    response.status(422).send("Usuário não encontrado");
-    return;
-  }
+    if (!checkMessage) {
+      response.status(422).send("Usuário não encontrado");
+      return;
+    }
 
-  try {
-    await database.collection("messages").insertOne({
-      from: messageFrom,
-      ...message,
-      time: time,
-    });
+    try {
+      await database.collection("messages").insertOne({
+        from: messageFrom,
+        ...message,
+        time: time,
+      });
 
-    response.status(201).send("ok");
-  } catch (error) {
-    response.status(422).send(error);
+      response.status(201).send("ok");
+    } catch (error) {
+      response.status(422).send(error);
+    }
   }
-});
+);
 
 server.get("/messages", async (require, response) => {
   const limit = parseInt(require.query.limit);
