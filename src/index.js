@@ -3,9 +3,9 @@ import chalk from "chalk";
 import dotenv from "dotenv";
 import cors from "cors";
 import dayjs from "dayjs";
-import { database } from "./database/mongodb.js";
-import { schemas } from "./schemas/schemas.js";
 import { validatesSchemas } from "./middlewares/validateSchemas.js";
+import { participantsRepositories } from "./repositories/participantsRepository.js";
+import { messagesRepositories } from "./repositories/messagesRepository.js";
 
 dotenv.config();
 
@@ -18,29 +18,28 @@ server.post(
   "/participants",
   validatesSchemas("participant"),
   async (require, response) => {
-    const user = require.body;
-    const checkUsers = await database
-      .collection("participants")
-      .findOne({ name: user.name });
-    const time = dayjs().format("HH:mm:ss");
-
-    if (checkUsers) {
-      response.status(409).send("Usuário já existe");
-      return;
-    }
+    const { name } = require.body;
+    const time = Date.now();
+    const formatedTime = dayjs().format("HH:mm:ss");
+    const statusMessage = {
+      from: name,
+      to: "Todos",
+      text: "entra na sala...",
+      type: "status",
+      time: formatedTime,
+    };
 
     try {
-      await database
-        .collection("participants")
-        .insertOne({ name: user.name, lastStatus: Date.now() });
+      const checkUsers = await participantsRepositories.findUserByName(name);
 
-      await database.collection("messages").insertOne({
-        from: user.name,
-        to: "Todos",
-        text: "entra na sala...",
-        type: "status",
-        time: time,
-      });
+      if (checkUsers) {
+        response.status(409).send("Usuário já existe");
+        return;
+      }
+
+      await participantsRepositories.createUser(name, time);
+
+      await messagesRepositories.createMessage(statusMessage);
 
       response.status(201).send("ok");
     } catch (error) {
@@ -50,10 +49,8 @@ server.post(
 );
 
 server.get("/participants", async (require, response) => {
-  const allParticipants = await database
-    .collection("participants")
-    .find()
-    .toArray();
+  const allParticipants = await participantsRepositories.getAllParticipants();
+
   response.status(201).send(allParticipants);
 });
 
@@ -62,19 +59,20 @@ server.post(
   validatesSchemas("message"),
   async (require, response) => {
     const message = require.body;
-    const messageFrom = require.headers.user;
-    const checkMessage = await database
-      .collection("participants")
-      .findOne({ name: messageFrom });
+    const { user: messageFrom } = require.headers;
     const time = dayjs().format("HH:mm:ss");
 
-    if (!checkMessage) {
-      response.status(422).send("Usuário não encontrado");
-      return;
-    }
-
     try {
-      await database.collection("messages").insertOne({
+      const userExists = await participantsRepositories.findUserByName(
+        messageFrom
+      );
+
+      if (!userExists) {
+        response.status(422).send("Usuário não encontrado");
+        return;
+      }
+
+      await messagesRepositories.createMessage({
         from: messageFrom,
         ...message,
         time: time,
@@ -89,17 +87,9 @@ server.post(
 
 server.get("/messages", async (require, response) => {
   const limit = parseInt(require.query.limit);
+  const { user } = require.headers;
 
-  const allMessages = await database
-    .collection("messages")
-    .find({
-      $or: [
-        { to: require.headers.user },
-        { from: require.headers.user },
-        { to: "Todos" },
-      ],
-    })
-    .toArray();
+  const allMessages = await messagesRepositories.getAllMessages(user);
 
   if (limit) {
     const lastMessages = allMessages.slice(-limit);
@@ -110,20 +100,18 @@ server.get("/messages", async (require, response) => {
 });
 
 server.post("/status", async (require, response) => {
-  const user = require.headers.user;
-  const participants = await database
-    .collection("participants")
-    .findOne({ name: user });
-
-  if (!participants) {
-    response.status(404).send("Participante não encontrado");
-    return;
-  }
+  const { user: name } = require.headers;
+  const time = Date.now();
 
   try {
-    await database
-      .collection("participants")
-      .updateOne({ name: user }, { $set: { lastStatus: Date.now() } });
+    const participants = await participantsRepositories.findUserByName(name);
+
+    if (!participants) {
+      response.status(404).send("Participante não encontrado");
+      return;
+    }
+
+    await participantsRepositories.updateParticipantStatus(name, time);
 
     response.sendStatus(200);
   } catch (error) {
@@ -135,17 +123,15 @@ const inactivesUsers = async () => {
   let deletedUsers = [];
   const currentTime = Date.now() - 100000;
 
-  const timeSpent = await database
-    .collection("participants")
-    .find({ lastStatus: { $lt: currentTime } })
-    .toArray();
-  await database
-    .collection("participants")
-    .deleteMany({ lastStatus: { $lt: currentTime } });
+  const timeSpent = await participantsRepositories.findTheLatestStatus(
+    currentTime
+  );
 
-  for (let i = 0; i < timeSpent.length; i++) {
+  await participantsRepositories.findTheLatestStatus(currentTime);
+
+  for (const element of timeSpent) {
     deletedUsers.push({
-      from: timeSpent[i].name,
+      from: element.name,
       to: "Todos",
       text: "sai da sala...",
       type: "status",
@@ -154,7 +140,7 @@ const inactivesUsers = async () => {
   }
 
   if (deletedUsers.length > 0) {
-    await database.collection("messages").insertMany(deletedUsers);
+    await messagesRepositories.leftTheRoomStatusMessages(deletedUsers);
   }
 };
 
