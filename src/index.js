@@ -1,4 +1,5 @@
-import express, { json, response } from "express";
+import express, { json } from "express";
+import chalk from "chalk";
 import dotenv from "dotenv";
 import { MongoClient } from "mongodb";
 import cors from "cors";
@@ -14,7 +15,7 @@ mongoClient.connect().then(() => {
     db = mongoClient.db("BatePapoUOL");
 });
 
-const server = express(process.env.MONGO_URI);
+const server = express();
 
 server.use(json());
 server.use(cors());
@@ -175,4 +176,8 @@ const inactivesUsers = async () => {
 
 setInterval(inactivesUsers, 15000);
 
-server.listen(5000);
+const PORT = Number(process.env.PORT) || 5500;
+
+server.listen(PORT, () => {
+  console.log(chalk.bold.green(`The server is up and runnig on port ${PORT}`));
+});
