@@ -2,9 +2,10 @@ import express, { json } from "express";
 import chalk from "chalk";
 import dotenv from "dotenv";
 import cors from "cors";
-import joi from "joi";
 import dayjs from "dayjs";
 import { database } from "./database/mongodb.js";
+import { schemas } from "./schemas/schemas.js";
+
 dotenv.config();
 
 const server = express();
@@ -12,20 +13,9 @@ const server = express();
 server.use(json());
 server.use(cors());
 
-const userSchema = joi.object({
-  name: joi.string().required(),
-});
-
-const messageSchema = joi.object({
-  from: joi.string(),
-  to: joi.string().required(),
-  text: joi.string().required(),
-  type: joi.string().required().valid("private_message", "message"),
-});
-
 server.post("/participants", async (require, response) => {
   const user = require.body;
-  const validation = userSchema.validate(user, { abortEarly: true });
+  const validation = schemas.participant.validate(user, { abortEarly: false });
   const checkUsers = await database
     .collection("participants")
     .findOne({ name: user.name });
@@ -60,14 +50,17 @@ server.post("/participants", async (require, response) => {
 });
 
 server.get("/participants", async (require, response) => {
-  const allParticipants = await database.collection("participants").find().toArray();
+  const allParticipants = await database
+    .collection("participants")
+    .find()
+    .toArray();
   response.status(201).send(allParticipants);
 });
 
 server.post("/messages", async (require, response) => {
   const message = require.body;
   const messageFrom = require.headers.user;
-  const validation = messageSchema.validate(message, { abortEarly: true });
+  const validation = schemas.message.validate(message, { abortEarly: false });
   const checkMessage = await database
     .collection("participants")
     .findOne({ name: messageFrom });
