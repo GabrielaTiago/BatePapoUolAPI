@@ -1,3 +1,4 @@
+import { ObjectId } from "mongodb";
 import { database } from "../database/mongodb.js";
 
 async function createMessage({ from, to, text, type, time }) {
@@ -25,8 +26,21 @@ async function leftTheRoomStatusMessages(leftTheRoomMessages) {
   await database.collection("messages").insertMany(leftTheRoomMessages);
 }
 
+async function findMessageById(id) {
+  const message = await database
+    .collection("messages")
+    .findOne({ _id: ObjectId(id) });
+  return message;
+}
+
+async function deleteMessage(id) {
+  await database.collection("messages").deleteOne({ _id: ObjectId(id) });
+}
+
 export const messagesRepositories = {
   createMessage,
-  leftTheRoomStatusMessages,
+  deleteMessage,
+  findMessageById,
   getAllMessages,
+  leftTheRoomStatusMessages,
 };
