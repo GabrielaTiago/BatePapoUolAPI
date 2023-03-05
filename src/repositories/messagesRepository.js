@@ -37,9 +37,19 @@ async function deleteMessage(id) {
   await database.collection("messages").deleteOne({ _id: ObjectId(id) });
 }
 
+async function editMessage(id, text, time) {
+  await database.collection("messages").updateOne(
+    { _id: ObjectId(id) },
+    {
+      $set: { text: text, time: time },
+    }
+  );
+}
+
 export const messagesRepositories = {
   createMessage,
   deleteMessage,
+  editMessage,
   findMessageById,
   getAllMessages,
   leftTheRoomStatusMessages,
