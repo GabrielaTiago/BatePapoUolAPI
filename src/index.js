@@ -1,13 +1,13 @@
 import "express-async-errors";
-import express, { json } from "express";
 import chalk from "chalk";
-import dotenv from "dotenv";
 import cors from "cors";
-import dayjs from "dayjs";
+import dotenv from "dotenv";
+import express, { json } from "express";
 import { validatesSchemas } from "./middlewares/validateSchemas.js";
-import { participantsRepositories } from "./repositories/participantsRepository.js";
-import { messagesRepositories } from "./repositories/messagesRepository.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
+import { messagesServices } from "./services/messagesServices.js";
+import { participantsServices } from "./services/partcipantsServices.js";
+import { statusServices } from "./services/statusServices.js";
 
 dotenv.config();
 
@@ -21,33 +21,15 @@ server.post(
   validatesSchemas("participant"),
   async (require, response) => {
     const { name } = require.body;
-    const time = Date.now();
-    const formatedTime = dayjs().format("HH:mm:ss");
-    const statusMessage = {
-      from: name,
-      to: "Todos",
-      text: "entra na sala...",
-      type: "status",
-      time: formatedTime,
-    };
 
-    const checkUsers = await participantsRepositories.findUserByName(name);
-
-    if (checkUsers) {
-      const error = { type: "conflict", message: "User already exists" };
-      throw error;
-    }
-
-    await participantsRepositories.createUser(name, time);
-
-    await messagesRepositories.createMessage(statusMessage);
+    await participantsServices.registerParticipant(name);
 
     response.status(201).send("ok");
   }
 );
 
 server.get("/participants", async (require, response) => {
-  const allParticipants = await participantsRepositories.getAllParticipants();
+  const allParticipants = await participantsServices.getAllParticipants();
 
   response.status(201).send(allParticipants);
 });
@@ -57,28 +39,11 @@ server.post(
   validatesSchemas("message"),
   async (require, response) => {
     const message = require.body;
-    const { user: messageFrom } = require.headers;
-    const time = dayjs().format("HH:mm:ss");
+    const { user: from } = require.headers;
 
-    const userExists = await participantsRepositories.findUserByName(
-      messageFrom
-    );
+    await messagesServices.createMessage(from, message);
 
-    if (!userExists) {
-      const error = {
-        type: "not_found",
-        message: "User not found",
-      };
-      throw error;
-    }
-
-    await messagesRepositories.createMessage({
-      from: messageFrom,
-      ...message,
-      time: time,
-    });
-
-    response.status(201).send("ok");
+    response.status(201).send("OK");
   }
 );
 
@@ -86,61 +51,20 @@ server.get("/messages", async (require, response) => {
   const limit = parseInt(require.query.limit);
   const { user } = require.headers;
 
-  const allMessages = await messagesRepositories.getAllMessages(user);
+  const messages = await messagesServices.getAllMessages(user, limit);
 
-  if (limit) {
-    const lastMessages = allMessages.slice(-limit);
-    response.status(200).send(lastMessages);
-  } else {
-    response.status(200).send(allMessages);
-  }
+  response.status(200).send(messages);
 });
 
 server.post("/status", async (require, response) => {
   const { user: name } = require.headers;
-  const time = Date.now();
 
-  const userExists = await participantsRepositories.findUserByName(name);
-
-  if (!userExists) {
-    const error = {
-      type: "not_found",
-      message: "User not found",
-    };
-    throw error;
-  }
-
-  await participantsRepositories.updateParticipantStatus(name, time);
+  await statusServices.updateParticipantStatus(name);
 
   response.sendStatus(200);
 });
 
-const inactivesUsers = async () => {
-  let deletedUsers = [];
-  const currentTime = Date.now() - 100000;
-
-  const timeSpent = await participantsRepositories.findTheLatestStatus(
-    currentTime
-  );
-
-  await participantsRepositories.findTheLatestStatus(currentTime);
-
-  for (const element of timeSpent) {
-    deletedUsers.push({
-      from: element.name,
-      to: "Todos",
-      text: "sai da sala...",
-      type: "status",
-      time: dayjs().format("HH:mm:ss"),
-    });
-  }
-
-  if (deletedUsers.length > 0) {
-    await messagesRepositories.leftTheRoomStatusMessages(deletedUsers);
-  }
-};
-
-setInterval(inactivesUsers, 15000);
+messagesServices.checksInactiveUsers();
 
 server.use(errorHandler);
 
