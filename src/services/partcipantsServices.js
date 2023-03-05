@@ -1,10 +1,12 @@
 import { messagesRepositories } from "../repositories/messagesRepository.js";
 import { participantsRepositories } from "../repositories/participantsRepository.js";
+import { stripHtmlTags } from "../utils/stripHtmltags.js";
 import { now, formatTime } from "../utils/timeFormatting.js";
 
-async function registerParticipant(name) {
+async function registerParticipant(participant) {
   const time = now();
   const formatedTime = formatTime();
+  const name = stripHtmlTags(participant);
   const statusMessage = {
     from: name,
     to: "Todos",
@@ -23,6 +25,8 @@ async function registerParticipant(name) {
     participantsRepositories.createUser(name, time),
     messagesRepositories.createMessage(statusMessage),
   ]);
+
+  return { name };
 }
 
 async function getAllParticipants() {
