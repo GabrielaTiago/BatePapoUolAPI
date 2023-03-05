@@ -17,3 +17,12 @@ export async function getAllMessages(req, res) {
 
   res.status(200).send(messages);
 }
+
+export async function deleteMessage(req, res) {
+  const { id } = req.params;
+  const { user } = req.headers;
+
+  await messagesServices.deleteMessage(id, user);
+
+  res.status(200).send("Deleted message");
+}

@@ -70,8 +70,28 @@ async function checksInactiveUsers() {
   }, TIME_FOR_NEW_REQUESTS);
 }
 
+async function deleteMessage(id, name) {
+  const message = await messagesRepositories.findMessageById(id);
+
+  if (!message) {
+    const error = { type: "not_found", message: "Message not found" };
+    throw error;
+  }
+
+  if (message.from !== name) {
+    const error = {
+      type: "unauthorized",
+      message: "User not allowed to delete this message",
+    };
+    throw error;
+  }
+
+  await messagesRepositories.deleteMessage(id);
+}
+
 export const messagesServices = {
   checksInactiveUsers,
   createMessage,
+  deleteMessage,
   getAllMessages,
 };
