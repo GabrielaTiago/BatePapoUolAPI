@@ -1,9 +1,15 @@
 import { messagesRepositories } from "../repositories/messagesRepository.js";
 import { participantsRepositories } from "../repositories/participantsRepository.js";
+import { stripHtmlTags } from "../utils/stripHtmltags.js";
 import { formatTime, now } from "../utils/timeFormatting.js";
 
-async function createMessage(from, message) {
+async function createMessage(from, messageObj) {
   const time = formatTime();
+  const text = stripHtmlTags(messageObj.text);
+  const message = {
+    ...messageObj,
+    text: text,
+  };
 
   const userExists = await participantsRepositories.findUserByName(from);
 

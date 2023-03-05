@@ -3,9 +3,9 @@ import { participantsServices } from "../services/partcipantsServices.js";
 export async function registerParticipant(req, res) {
   const { name } = req.body;
 
-  await participantsServices.registerParticipant(name);
+  const data = await participantsServices.registerParticipant(name);
 
-  res.status(201).send("OK");
+  res.status(201).send(data);
 }
 
 export async function getAllParticipants(req, res) {
