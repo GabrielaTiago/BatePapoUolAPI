@@ -36,8 +36,15 @@ async function findTheLatestStatus(currentTime) {
   return latest;
 }
 
+async function deleteInactiveParticipants(timeLimit) {
+  await database
+    .collection("participants")
+    .deleteMany({ lastStatus: { $lte: timeLimit } });
+}
+
 export const participantsRepositories = {
   createUser,
+  deleteInactiveParticipants,
   findUserByName,
   findTheLatestStatus,
   getAllParticipants,
