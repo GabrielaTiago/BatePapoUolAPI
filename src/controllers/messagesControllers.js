@@ -26,3 +26,13 @@ export async function deleteMessage(req, res) {
 
   res.status(200).send("Deleted message");
 }
+
+export async function editMessage(req, res) {
+  const { id } = req.params;
+  const { user } = req.headers;
+  const message = req.body;
+
+  await messagesServices.editMessage(id, user, message);
+
+  res.status(200).send("Updated");
+}

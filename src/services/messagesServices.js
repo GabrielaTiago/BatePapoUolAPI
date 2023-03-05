@@ -89,9 +89,34 @@ async function deleteMessage(id, name) {
   await messagesRepositories.deleteMessage(id);
 }
 
+async function editMessage(id, user, messageObj) {
+  const time = formatTime();
+  const text = stripHtmlTags(messageObj.text);
+
+  const userExists = await participantsRepositories.findUserByName(user);
+
+  if (!userExists) {
+    const error = {
+      type: "not_found",
+      message: "User not found",
+    };
+    throw error;
+  }
+
+  const message = await messagesRepositories.findMessageById(id);
+
+  if (!message) {
+    const error = { type: "not_found", message: "Message not found" };
+    throw error;
+  }
+
+  await messagesRepositories.editMessage(id, text, time);
+}
+
 export const messagesServices = {
   checksInactiveUsers,
   createMessage,
   deleteMessage,
+  editMessage,
   getAllMessages,
 };
