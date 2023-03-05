@@ -1,3 +1,4 @@
+import "express-async-errors";
 import express, { json } from "express";
 import chalk from "chalk";
 import dotenv from "dotenv";
@@ -6,6 +7,7 @@ import dayjs from "dayjs";
 import { validatesSchemas } from "./middlewares/validateSchemas.js";
 import { participantsRepositories } from "./repositories/participantsRepository.js";
 import { messagesRepositories } from "./repositories/messagesRepository.js";
+import { errorHandler } from "./middlewares/errorHandler.js";
 
 dotenv.config();
 
@@ -29,22 +31,18 @@ server.post(
       time: formatedTime,
     };
 
-    try {
-      const checkUsers = await participantsRepositories.findUserByName(name);
+    const checkUsers = await participantsRepositories.findUserByName(name);
 
-      if (checkUsers) {
-        response.status(409).send("Usuário já existe");
-        return;
-      }
-
-      await participantsRepositories.createUser(name, time);
-
-      await messagesRepositories.createMessage(statusMessage);
-
-      response.status(201).send("ok");
-    } catch (error) {
-      response.status(422).send(error);
+    if (checkUsers) {
+      const error = { type: "conflict", message: "User already exists" };
+      throw error;
     }
+
+    await participantsRepositories.createUser(name, time);
+
+    await messagesRepositories.createMessage(statusMessage);
+
+    response.status(201).send("ok");
   }
 );
 
@@ -62,26 +60,25 @@ server.post(
     const { user: messageFrom } = require.headers;
     const time = dayjs().format("HH:mm:ss");
 
-    try {
-      const userExists = await participantsRepositories.findUserByName(
-        messageFrom
-      );
+    const userExists = await participantsRepositories.findUserByName(
+      messageFrom
+    );
 
-      if (!userExists) {
-        response.status(422).send("Usuário não encontrado");
-        return;
-      }
-
-      await messagesRepositories.createMessage({
-        from: messageFrom,
-        ...message,
-        time: time,
-      });
-
-      response.status(201).send("ok");
-    } catch (error) {
-      response.status(422).send(error);
+    if (!userExists) {
+      const error = {
+        type: "not_found",
+        message: "User not found",
+      };
+      throw error;
     }
+
+    await messagesRepositories.createMessage({
+      from: messageFrom,
+      ...message,
+      time: time,
+    });
+
+    response.status(201).send("ok");
   }
 );
 
@@ -103,20 +100,19 @@ server.post("/status", async (require, response) => {
   const { user: name } = require.headers;
   const time = Date.now();
 
-  try {
-    const participants = await participantsRepositories.findUserByName(name);
+  const userExists = await participantsRepositories.findUserByName(name);
 
-    if (!participants) {
-      response.status(404).send("Participante não encontrado");
-      return;
-    }
-
-    await participantsRepositories.updateParticipantStatus(name, time);
-
-    response.sendStatus(200);
-  } catch (error) {
-    response.status(500).send(error);
+  if (!userExists) {
+    const error = {
+      type: "not_found",
+      message: "User not found",
+    };
+    throw error;
   }
+
+  await participantsRepositories.updateParticipantStatus(name, time);
+
+  response.sendStatus(200);
 });
 
 const inactivesUsers = async () => {
@@ -145,6 +141,8 @@ const inactivesUsers = async () => {
 };
 
 setInterval(inactivesUsers, 15000);
+
+server.use(errorHandler);
 
 const PORT = Number(process.env.PORT) || 5500;
 
