@@ -21,6 +21,8 @@ O projeto consiste em uma API construída com Node.js, JavaScript, Express e Mon
 
 A API possui uma rota de post para registro simples de participantes, bem como uma rota de get para visualizar todos os participantes registrados. Além disso, o projeto inclui um CRUD completo para mensagens, que permite a visualização de todas as mensagens em uma rota com paginação. Também é possível postar uma nova mensagem, especificando os campos "de", "para" e "tipo". Os participantes podem editar e apagar suas próprias mensagens.
 
+#### 💬 [Acesse aqui](https://batepapouolapi-production.up.railway.app)
+
 ---
 
 ### :bookmark_tabs: Características do projeto
@@ -33,9 +35,6 @@ A API possui uma rota de post para registro simples de participantes, bem como u
   - De maneira reservada, para um usário específico, apenas o remetente e destinatário podendo visualizá-las
 - Usuário pode editar suas mensagens enviadas
 - Usário pode deletar suas mensagens enviadas
-<!-- - Validações para nome do usuário e mensagens, não permitem strings vazias
-- Middleware de validações de schemas com a biblioteca Joi
-- Middleware de error -->
 
 ---
 
@@ -110,7 +109,7 @@ $~$
 - headers: { user: "Pedro" }
 - body:
         /* APENAS UM OBJETO */
-        
+
         /* Publicamente para todos */
         {
             "to": "Todos",
