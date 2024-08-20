@@ -2,7 +2,7 @@
 
 # <p align = "center">BatePapoUOL</p>
 
-## <p align = "center">API de um chat online</p>
+### <p align = "center">API de um chat online</p>
 
 <div align = "center">
    <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" height="30px"/>
@@ -13,34 +13,28 @@
    <img src="https://img.shields.io/badge/prettier-1A2C34?style=for-the-badge&logo=prettier&logoColor=F7BA3E" heigth="30px"/>
 </div>
 
-$~$
-
-### :clipboard: Descrição
+## :clipboard: Descrição
 
 O projeto consiste em uma API construída com Node.js, JavaScript, Express e MongoDB para criar um chat online inspirado no BatePapoUOL.
 
 A API possui uma rota de post para registro simples de participantes, bem como uma rota de get para visualizar todos os participantes registrados. Além disso, o projeto inclui um CRUD completo para mensagens, que permite a visualização de todas as mensagens em uma rota com paginação. Também é possível postar uma nova mensagem, especificando os campos "de", "para" e "tipo". Os participantes podem editar e apagar suas próprias mensagens.
 
-#### 💬 [Acesse aqui](https://batepapouolapi-production.up.railway.app)
+💬 [**Acesse aqui**](https://batepapouolapi-production.up.railway.app)
 
----
+## :bookmark_tabs: Características do projeto
 
-### :bookmark_tabs: Características do projeto
+-   Usuários podem se registrar inserindo seu nome
+-   Usuários podem ver todas as mensagens públicas e de status
+-   Usuários podem mandar mensagens:
+    -   De maneira pública, sem especificar, todos os participantes possandendo visualizá-las
+    -   De maneira pública, para um usuário específico, todos os participantes possandendo visualizá-las
+    -   De maneira reservada, para um usário específico, apenas o remetente e destinatário podendo visualizá-las
+-   Usuário pode editar suas mensagens enviadas
+-   Usário pode deletar suas mensagens enviadas
 
-- Usuários podem se registrar inserindo seu nome
-- Usuários podem ver todas as mensagens públicas e de status
-- Usuários podem mandar mensagens:
-  - De maneira pública, sem especificar, todos os participantes possandendo visualizá-las
-  - De maneira pública, para um usuário específico, todos os participantes possandendo visualizá-las
-  - De maneira reservada, para um usário específico, apenas o remetente e destinatário podendo visualizá-las
-- Usuário pode editar suas mensagens enviadas
-- Usário pode deletar suas mensagens enviadas
+## :world_map: Rotas
 
----
-
-### :world_map: Rotas
-
-#### <span style="color:purple">[POST]</span> /participants
+#### **[POST]** /participants
 
 ```yml
 - Rota para login de um novo participante
@@ -48,7 +42,7 @@ A API possui uma rota de post para registro simples de participantes, bem como u
 
 - name: string,
 
-- body: { "name": "Beyoncé" }
+- body: { 'name': 'Beyoncé' }
 ```
 
 **Retornos:**
@@ -62,7 +56,7 @@ A API possui uma rota de post para registro simples de participantes, bem como u
 
 $~$
 
-#### **<span style="color:green">[GET]</span>** /participants
+#### **[GET]** /participants
 
 ```yml
 - Rota para buscar todos os participants logados
@@ -96,7 +90,7 @@ $~$
 
 $~$
 
-#### <span style="color:purple">[POST]</span> /messages
+#### **[POST]** /messages
 
 ```yml
 - Rota para criação de uma nova mensagem
@@ -149,7 +143,7 @@ $~$
 
 $~$
 
-#### <span style="color:green">[GET]</span> /messages?page=50
+#### **[GET]** /messages?page=50
 
 ```yml
 - Rota para buscar todas as mensagens
@@ -237,7 +231,7 @@ $~$
 
 $~$
 
-#### <span style="color:blue">[PUT]</span> /messages/:id
+#### **[PUT]** /messages/:id
 
 ```yml
 - Rota para edição de uma mensagem do participante
@@ -271,13 +265,13 @@ $~$
 
 $~$
 
-#### <span style="color:red">[DELETE]</span> /messages/:id
+#### **[DELETE]** /messages/:id
 
 ```yml
 - Rota para deleção de uma mensagem do participante
 
 - params: { id: 64053240ec7fc02be4680c7b }
-- hearders: { user: "Tiago" }
+- hearders: { user: 'Tiago' }
 ```
 
 **Retornos:**
@@ -290,12 +284,12 @@ $~$
 
 $~$
 
-#### <span style="color:purple">[POST]</span> /status
+#### **[POST]** /status
 
 ```yml
 - Rota para verificação da inatividade dos participantes
 
-- hearders: { user: "Gabriela" }
+- hearders: { user: 'Gabriela' }
 ```
 
 **Retornos:**
@@ -307,9 +301,7 @@ $~$
 
 $~$
 
----
-
-### :rocket: Rodando esse projeto localmente
+## :rocket: Rodando esse projeto localmente
 
 Para inicializar esse projeto é necessário que você possua a última versão estável do [Node.js](https://nodejs.org/en/download) e [npm](https://www.npmjs.com/) rodando localmente. Você também precisará instalar o [MongoDB](https://www.mongodb.com/try/download/bi-connector) para acessar o banco de dados.
 
@@ -333,9 +325,15 @@ Execute o seguinte comando para instalar as dependências.
     npm install
 ```
 
-Criar um arquivo **.env** na raíz do projeto com os seguintes dados:
+Para ininicilizar o banco de dados, execute:
 
-#### env
+```bash
+   mongod --dbpath ~/.mongo
+```
+
+🛑 Não feche esse terminal!!
+
+Crie um arquivo **.env** na raíz do projeto com os seguintes dados:
 
 ```bash
     PORT=5000
@@ -351,24 +349,24 @@ Para iniciar o servidor, execute o comando:
 
 A aplicação estará disponível em: <http://localhost:5000> no seu navegador.
 
----
+## :bulb: Reconhecimentos
 
-### :bulb: Reconhecimentos
+-   [Badges para Github](https://github.com/alexandresanlim/Badges4-README.md-Profile#-database-)
+-   [Inspiração de README](https://gist.github.com/luanalessa/7f98467a5ed62d00dcbde67d4556a1e4#file-readme-md)
+-   [Driven Education](https://www.driven.com.br)
 
-- [Badges para Github](https://github.com/alexandresanlim/Badges4-README.md-Profile#-database-)
-- [Inspiração de README](https://gist.github.com/luanalessa/7f98467a5ed62d00dcbde67d4556a1e4#file-readme-md)
-- [Driven Education](https://www.driven.com.br)
+## :muscle: Contribuição
 
----
+Contribuições são bem-vindas! Se você encontrar algum problema ou tiver sugestões de melhoria, abra uma _issue_ ou envie um _pull request_.
 
-### 👩‍🦱 Autora
+## :woman_technologist: Autora
 
 Gabriela Tiago de Araújo
 
-- email: gabrielatiagodearaujo@outlook.com
-- linkedin: <https://www.linkedin.com/in/gabrielatiago/>
-- portfolio: <https://gabrielatiago.vercel.app>
+-   email: <gabrielatiagodearaujo@outlook.com>
+-   linkedin: <https://www.linkedin.com/in/gabrielatiago/>
+-   portfolio: <https://gabrielatiago.vercel.app>
 
----
+$~$
 
 [🔝 Back to top](#batepapouol)
